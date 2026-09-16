@@ -1,0 +1,50 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-json
+        priority: 10
+      - id: check-toml
+        priority: 10
+      - id: check-yaml
+        priority: 10
+      - id: check-added-large-files
+        priority: 10
+        args: ["--maxkb=600"]
+      - id: check-merge-conflict
+        priority: 10
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+
+  - repo: local
+    hooks:
+      - id: taplo-fmt
+        name: taplo fmt
+        entry: taplo fmt --config .config/taplo.toml
+        language: python
+        additional_dependencies: ["taplo==0.9.3"]
+        types: [toml]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.0
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: pyright
+        name: Validate types with pyright
+        entry: uv run pyright
+        pass_filenames: false
+        language: python
+        types: [python]
+        priority: 10
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.9.26
+    hooks:
+      - id: uv-lock
+        priority: 10
