@@ -9,7 +9,7 @@ from src.conf import settings
 from src.db import models
 
 config = context.config
-config.set_main_option("sqlalchemy.url", str(settings.db_url))
+config.set_main_option("sqlalchemy.url", str(settings.db_url).replace("+asyncpg", ""))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
