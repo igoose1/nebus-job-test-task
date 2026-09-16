@@ -5,6 +5,8 @@ from uuid import UUID
 from fastapi import APIRouter, Header
 from pydantic import AwareDatetime, BaseModel, HttpUrl
 
+from src.types import Currency, Status
+
 router = APIRouter()
 
 
@@ -15,7 +17,7 @@ async def healthcheck() -> Literal["OK"]:
 
 class CreatePaymentSchema(BaseModel):
     amount: Decimal
-    currency: Literal["RUB", "USD", "EUR"]
+    currency: Currency
     description: str
     metadata: dict[str, Any]
     webhook_url: HttpUrl
@@ -23,15 +25,15 @@ class CreatePaymentSchema(BaseModel):
 
 class ShortPaymentSchema(BaseModel):
     payment_id: UUID
-    status: Literal["pending", "succeeded", "failed"]
+    status: Status
     created_at: AwareDatetime
 
 
 class DetailedPaymentSchema(BaseModel):
     payment_id: UUID
-    status: Literal["pending", "succeeded", "failed"]
+    status: Status
     amount: Decimal
-    currency: Literal["RUB", "USD", "EUR"]
+    currency: Currency
     description: str
     metadata: dict[str, Any]
     webhook_url: HttpUrl
