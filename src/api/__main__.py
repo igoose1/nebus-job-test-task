@@ -2,8 +2,8 @@ import contextlib
 
 from fastapi import FastAPI
 
-from service.api.conf import settings
-from service.api.endpoints import router
+from src.api.conf import settings
+from src.api.endpoints import router
 
 app = FastAPI()
 app.include_router(router, prefix="/api/v1")

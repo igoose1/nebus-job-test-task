@@ -8,6 +8,11 @@ from pydantic import AwareDatetime, BaseModel, HttpUrl
 router = APIRouter()
 
 
+@router.get("/health")
+async def healthcheck() -> Literal["OK"]:
+    return "OK"
+
+
 class CreatePaymentSchema(BaseModel):
     amount: Decimal
     currency: Literal["RUB", "USD", "EUR"]
