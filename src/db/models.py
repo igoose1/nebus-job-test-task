@@ -17,7 +17,7 @@ class PaymentModel(Base):
     amount: Mapped[Decimal]
     currency: Mapped[Currency]
     description: Mapped[str]
-    metadata: Mapped[dict[str, Any]] = mapped_column(JSON)
+    payment_metadata: Mapped[dict[str, Any]] = mapped_column("metadata", JSON)
     status: Mapped[Status]
     idempotency_key: Mapped[str] = mapped_column(unique=True)
     webhook_url: Mapped[str]
