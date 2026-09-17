@@ -6,9 +6,9 @@ from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import AwareDatetime, BaseModel, HttpUrl
 from sqlalchemy.exc import IntegrityError
 
-from src.db.models import PaymentModel
+from src.db.models import OutboxMessageModel, PaymentModel
 from src.db.sessions import SessionDep
-from src.types import Currency, Status
+from src.types import Currency, NewPaymentEvent, Status
 
 router = APIRouter()
 
@@ -60,8 +60,13 @@ async def create_payment(
         idempotency_key=idempotency_key,
         webhook_url=str(body.webhook_url),
     )
+    message = OutboxMessageModel(
+        routing_key="payments.new",
+        payload=NewPaymentEvent(payment_id=payment.id).model_dump_json().encode(),
+    )
+
     async with session.begin():
-        session.add(payment)
+        session.add_all([payment, message])
         try:
             await session.flush()
         except IntegrityError:
