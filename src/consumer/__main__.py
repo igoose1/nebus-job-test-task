@@ -1,5 +1,4 @@
 import logging
-from uuid import UUID
 
 from faststream import AckPolicy, FastStream
 from faststream.rabbit import RabbitBroker
@@ -9,6 +8,7 @@ from src.conf import settings
 from src.consumer.processor import process_new_payment
 from src.db.sessions import create_engine, create_session_factory
 from src.mq import DLQ, EXCHANGE, PAYMENTS, RETRY_QUEUES
+from src.types import NewPaymentEvent
 
 logger = logging.getLogger(__name__)
 
@@ -23,15 +23,15 @@ session_factory = create_session_factory(create_engine(str(settings.db_url)))
     EXCHANGE,
     ack_policy=AckPolicy.NACK_ON_ERROR,
 )
-async def handle_new_payment(payment_id: UUID, message: RabbitMessage) -> None:
+async def handle_new_payment(event: NewPaymentEvent, message: RabbitMessage) -> None:
     attempt = int(message.headers.get("x-attempt", 1))
-    logger.info("processing payment_id %s attempt %d", payment_id, attempt)
+    logger.info("processing payment_id %s attempt %d", event.payment_id, attempt)
     try:
         async with session_factory() as session, session.begin():
-            await process_new_payment(session, payment_id)
+            await process_new_payment(session, event.payment_id)
     except Exception as exc:  # noqa: BLE001
-        if attempt > settings.max_attempts:
-            logger.error("attempt %d failed: %r", attempt, exc)
+        if attempt > len(RETRY_QUEUES):
+            logger.error("attempt %d failed as last: %r", attempt, exc)
             return
         retry_queue = RETRY_QUEUES[attempt - 1]
         logger.warning(
@@ -49,7 +49,7 @@ async def handle_new_payment(payment_id: UUID, message: RabbitMessage) -> None:
         await message.ack()
         return
     await message.ack()
-    logger.info("succeeded %s", payment_id)
+    logger.info("succeeded %s", event.payment_id)
 
 
 async def main() -> None:

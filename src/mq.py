@@ -2,6 +2,8 @@ from typing import Any
 
 from faststream.rabbit import ExchangeType, QueueType, RabbitExchange, RabbitQueue
 
+from src.conf import settings
+
 EXCHANGE = RabbitExchange("events", type=ExchangeType.TOPIC, durable=True)
 
 
@@ -33,16 +35,16 @@ PAYMENTS = quorum_queue(
 
 RETRY_QUEUES = [
     quorum_queue(
-        f"payments.retry.{attempt}",
+        f"payments.retry.{retry_attempt}",
         arguments={
-            "x-message-ttl": ttl_ms,
+            "x-message-ttl": 2**retry_attempt * 1000,  # exponential backoff (in ms)
             "x-dead-letter-exchange": "",
             "x-dead-letter-routing-key": PAYMENTS.name,
             "x-dead-letter-strategy": "at-least-once",
             "x-overflow": "reject-publish",
         },
     )
-    for attempt, ttl_ms in ((1, 10_000), (2, 40_000))
+    for retry_attempt in range(1, settings.max_attempts)
 ]
 
 DLQ = quorum_queue("payments.dlq")

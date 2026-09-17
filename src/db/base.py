@@ -1,10 +1,8 @@
 import datetime
 from typing import Any, ClassVar
 
-from sqlalchemy import MetaData, types
+from sqlalchemy import DateTime, MetaData, types
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass
-
-from src.db.core import TZDateTime
 
 
 class Base(MappedAsDataclass, DeclarativeBase):
@@ -19,5 +17,5 @@ class Base(MappedAsDataclass, DeclarativeBase):
     )
     type_annotation_map: ClassVar[dict[Any, Any]] = {
         int: types.BigInteger,
-        datetime.datetime: TZDateTime,
+        datetime.datetime: DateTime(timezone=True),
     }

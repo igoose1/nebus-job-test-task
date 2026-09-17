@@ -1,8 +1,8 @@
 """Add payments and outbox_messages.
 
-Revision ID: 76108cc105cc
+Revision ID: 33356e9b3c7a
 Revises:
-Create Date: 2026-09-17 22:57:30.501425
+Create Date: 2026-09-17 23:15:52.253887
 
 """
 
@@ -12,10 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-import src.db.core
-
 # revision identifiers, used by Alembic.
-revision: str = "76108cc105cc"
+revision: str = "33356e9b3c7a"
 down_revision: str | Sequence[str] | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -32,13 +30,13 @@ def upgrade() -> None:
         sa.Column("publish_attempts", sa.BigInteger(), nullable=False),
         sa.Column(
             "next_attempt_at",
-            src.db.core.TZDateTime(),
+            sa.DateTime(timezone=True),
             server_default=sa.text("timezone('utc', now())"),
             nullable=False,
         ),
         sa.Column(
             "created_at",
-            src.db.core.TZDateTime(),
+            sa.DateTime(timezone=True),
             server_default=sa.text("timezone('utc', now())"),
             nullable=False,
         ),
@@ -68,7 +66,7 @@ def upgrade() -> None:
         sa.Column("webhook_url", sa.String(), nullable=False),
         sa.Column(
             "created_at",
-            src.db.core.TZDateTime(),
+            sa.DateTime(timezone=True),
             server_default=sa.text("timezone('utc', now())"),
             nullable=False,
         ),
@@ -78,7 +76,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("processing_attempts", sa.BigInteger(), nullable=False),
-        sa.Column("processed_at", src.db.core.TZDateTime(), nullable=True),
+        sa.Column("processed_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_payments")),
         sa.UniqueConstraint(
             "idempotency_key", name=op.f("uq_payments_idempotency_key")
