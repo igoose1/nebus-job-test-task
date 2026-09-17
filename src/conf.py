@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     listen_port: int
     db_url: PostgresDsn
     mq_url: AmqpDsn
+    api_workers: int = 4
 
     relay_batch_size: int = 100
     relay_poll_interval: datetime.timedelta = datetime.timedelta(seconds=1)

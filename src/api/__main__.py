@@ -28,12 +28,9 @@ app.include_router(router, prefix="/api/v1")
 if __name__ == "__main__":
     import uvicorn
 
-    with contextlib.suppress(KeyboardInterrupt):
-        server = uvicorn.Server(
-            uvicorn.Config(
-                app,
-                host=settings.listen_host,
-                port=settings.listen_port,
-            )
-        )
-        server.run()
+    uvicorn.run(
+        "src.api.__main__:app",
+        host=settings.listen_host,
+        port=settings.listen_port,
+        workers=settings.api_workers,
+    )
