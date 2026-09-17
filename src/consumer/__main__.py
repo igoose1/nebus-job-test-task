@@ -1,66 +1,42 @@
+import asyncio
+import contextlib
 import logging
+from collections.abc import AsyncIterator
 
-from faststream import AckPolicy, FastStream
-from faststream.rabbit import RabbitBroker
-from faststream.rabbit.annotations import RabbitMessage
+from faststream import ContextRepo, FastStream
+from faststream.rabbit import Channel, RabbitBroker
 
 from src.conf import settings
-from src.consumer.processor import process_new_payment
+from src.consumer.handlers import router
 from src.db.sessions import create_engine, create_session_factory
-from src.mq import DLQ, EXCHANGE, PAYMENTS, RETRY_QUEUES
-from src.types import NewPaymentEvent
+from src.mq import DLQ, RETRY_QUEUES
 
 logger = logging.getLogger(__name__)
 
-broker = RabbitBroker(str(settings.mq_url))
-broker.subscriber("payments.new")(process_new_payment)
-app = FastStream(broker)
-session_factory = create_session_factory(create_engine(str(settings.db_url)))
 
+def create_app() -> FastStream:
+    broker = RabbitBroker(
+        str(settings.mq_url),
+        default_channel=Channel(publisher_confirms=True, on_return_raises=True),
+    )
+    broker.include_router(router)
 
-@broker.subscriber(
-    PAYMENTS,
-    EXCHANGE,
-    ack_policy=AckPolicy.NACK_ON_ERROR,
-)
-async def handle_new_payment(event: NewPaymentEvent, message: RabbitMessage) -> None:
-    attempt = int(message.headers.get("x-attempt", 1))
-    logger.info("processing payment_id %s attempt %d", event.payment_id, attempt)
-    try:
-        async with session_factory() as session:
-            await process_new_payment(session, event.payment_id)
-    except Exception as exc:  # noqa: BLE001
-        if attempt > len(RETRY_QUEUES):
-            logger.error("attempt %d failed as last: %r", attempt, exc)
-            return
-        retry_queue = RETRY_QUEUES[attempt - 1]
-        logger.warning(
-            "attempt %d failed, retrying with %s: %r", attempt, retry_queue.name, exc
-        )
-        await broker.publish(
-            message.body,
-            routing_key=retry_queue.name,
-            message_id=message.message_id,
-            content_type=message.content_type,
-            headers={"x-attempt": attempt + 1},
-            persist=True,
-            mandatory=True,
-        )
-        await message.ack()
-        return
-    await message.ack()
-    logger.info("succeeded %s", event.payment_id)
+    @contextlib.asynccontextmanager
+    async def lifespan(context: ContextRepo) -> AsyncIterator[None]:
+        engine = create_engine(str(settings.db_url))
+        context.set_global("session_factory", create_session_factory(engine))
 
-
-async def main() -> None:
-    async with broker:
+        await broker.connect()
         for queue in (*RETRY_QUEUES, DLQ):
             await broker.declare_queue(queue)
-        await broker.start()
-        await asyncio.Event().wait()
+
+        try:
+            yield
+        finally:
+            await engine.dispose()
+
+    return FastStream(broker, lifespan=lifespan)
 
 
 if __name__ == "__main__":
-    import asyncio
-
-    asyncio.run(main())
+    asyncio.run(create_app().run())
