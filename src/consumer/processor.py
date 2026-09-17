@@ -57,28 +57,12 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
             )
             return
 
+    logger.info("emulating payment processing for payment %s", payment_id)
     try:
-        logger.info("emulating payment processing for payment %s", payment_id)
         await emulate_payment_processing(
             idempotency_key=payment.id,
             # here would be more arguments but we are emulating
         )
-        logger.info("succeeded emulation for payment %s", payment_id)
-        # if we are here, we succeeded
-        async with session.begin():
-            await session.execute(
-                update(PaymentModel)
-                .where(
-                    PaymentModel.id == payment_id,
-                    PaymentModel.processing_attempts
-                    == payment.processing_attempts,  # fencing
-                )
-                .values(
-                    processing_status="succeeded",
-                    status="succeeded",
-                    processing_attempts=payment.processing_attempts + 1,
-                ),
-            )
     except Exception:
         logger.info("failed emulation for payment %s", payment_id)
         async with session.begin():
@@ -96,5 +80,20 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
                 ),
             )
         raise
+    logger.info("succeeded emulation for payment %s", payment_id)
+    async with session.begin():
+        await session.execute(
+            update(PaymentModel)
+            .where(
+                PaymentModel.id == payment_id,
+                PaymentModel.processing_attempts
+                == payment.processing_attempts,  # fencing
+            )
+            .values(
+                processing_status="succeeded",
+                status="succeeded",
+                processing_attempts=payment.processing_attempts + 1,
+            ),
+        )
 
     # TODO: call a webhook
