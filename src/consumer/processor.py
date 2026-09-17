@@ -119,7 +119,7 @@ async def deliver_webhook(session: AsyncSession, payment_id: UUID) -> None:
     if payment is None:
         raise ProcessingNotFoundPaymentError
 
-    if payment.status == "pendings":
+    if payment.status == "pending":
         logger.warning(
             "payment %s is owned by another consumer, it will send the webhook",
             payment_id,
