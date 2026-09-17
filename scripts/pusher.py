@@ -28,7 +28,7 @@ async def send_one(
         resp = await client.post(url, json=payload, headers=headers)
         results[resp.status_code] += 1
     except httpx2.HTTPError as exc:
-        results[type(exc).__name__] += 1
+        results[f"{type(exc).__name__}: {exc}"] += 1
 
 
 async def fire_at(
