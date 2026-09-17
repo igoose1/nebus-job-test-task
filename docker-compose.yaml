@@ -9,7 +9,7 @@ services:
     env_file: .env
     environment:
       - SERVICE_LISTEN_HOST=0.0.0.0
-      - SERVICE_DB_URL=postgresql+asyncpg://postgres:password@db:5432/service
+      - SERVICE_DB_URL=postgresql+asyncpg://postgres:CHANGEME@db:5432/service
     ports:
       - 127.0.0.1:${SERVICE_LISTEN_PORT}:${SERVICE_LISTEN_PORT}
     healthcheck:
@@ -31,7 +31,7 @@ services:
     restart: unless-stopped
     environment:
       - POSTGRES_DB=service
-      - POSTGRES_PASSWORD=changeme
+      - POSTGRES_PASSWORD=CHANGEME
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres", "-d", "service"]
       interval: 5s

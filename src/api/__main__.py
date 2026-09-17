@@ -3,20 +3,19 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from fastapi import FastAPI
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from src.api.endpoints import router
 from src.conf import settings
+from src.db.sessions import create_engine, create_session_factory
 
 
 @contextlib.asynccontextmanager
 async def lifespan(_: Any) -> AsyncIterator[dict[str, Any]]:
-    engine = create_async_engine(url=str(settings.db_url), echo=True)
-    sessionmaker = async_sessionmaker(engine)
+    engine = create_engine(str(settings.db_url))
+    session_factory = create_session_factory(engine)
 
     yield {
-        "engine": engine,
-        "sessionmaker": sessionmaker,
+        "session_factory": session_factory,
     }
 
     await engine.dispose()
