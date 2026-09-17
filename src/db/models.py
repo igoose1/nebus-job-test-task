@@ -27,6 +27,10 @@ class PaymentModel(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         init=False, server_default=UTC_NOW
     )
+    webhook_sent_at: Mapped[datetime.datetime | None] = mapped_column(
+        init=False,
+        default=None,
+    )
     started_processing_at: Mapped[datetime.datetime | None] = mapped_column(
         default=None
     )
