@@ -2,10 +2,12 @@ import logging
 from typing import Any
 from uuid import UUID
 
+import httpx2
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import PaymentModel
+from src.types import WebhookEvent
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +34,10 @@ async def emulate_payment_processing(**_data: Any) -> None:
 
 class ProcessingNotFoundPaymentError(ProcessingError):
     """Raised when there's no payment by a specified ID."""
+
+
+class ProcessingWebhookError(ProcessingError):
+    """Raised when there's an issue with pushing to a webhook."""
 
 
 async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
@@ -92,4 +98,15 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
             ),
         )
 
-    # TODO: call a webhook
+    async with httpx2.AsyncClient() as http:
+        response = await http.post(
+            payment.webhook_url,
+            data=WebhookEvent(
+                payment_id=payment.id,
+                status=payment.status,
+            ).model_dump(),
+        )
+        if response.is_error:
+            raise ProcessingWebhookError(
+                f"webhook failed with {response.status_code}: {response.text}"
+            )

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import ClassVar, Literal
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -9,3 +9,9 @@ type Status = Literal["pending", "succeeded", "failed"]
 
 class NewPaymentEvent(BaseModel):
     payment_id: UUID
+
+
+class WebhookEvent(BaseModel):
+    event_type: ClassVar[Literal["payments.processed"]] = "payments.processed"
+    payment_id: UUID
+    status: Status
