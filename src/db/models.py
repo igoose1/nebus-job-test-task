@@ -36,10 +36,13 @@ class OutboxMessageModel(Base):
     id: Mapped[int] = mapped_column(init=False, primary_key=True)
     routing_key: Mapped[str]
     payload: Mapped[bytes]
-    attempts: Mapped[int] = mapped_column(default=0)
+    publish_attempts: Mapped[int] = mapped_column(default=0)
     next_attempt_at: Mapped[datetime.datetime] = mapped_column(
-        init=False, server_default=UTC_NOW
+        init=False,
+        server_default=UTC_NOW,
+        index=True,
     )
     created_at: Mapped[datetime.datetime] = mapped_column(
-        init=False, server_default=UTC_NOW
+        init=False,
+        server_default=UTC_NOW,
     )
