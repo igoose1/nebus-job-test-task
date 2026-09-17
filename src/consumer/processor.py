@@ -72,7 +72,22 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
                             processing_attempts=payment.processing_attempts + 1,
                         ),
                     )
-            logger.info("succeeded emulation for payment %s", payment_id)
+            else:  # this belongs to try-except
+                logger.info("succeeded emulation for payment %s", payment_id)
+                async with session.begin():
+                    await session.execute(
+                        update(PaymentModel)
+                        .where(
+                            PaymentModel.id == payment_id,
+                            PaymentModel.processing_attempts
+                            == payment.processing_attempts,  # fencing
+                        )
+                        .values(
+                            status="succeeded",
+                            processing_attempts=payment.processing_attempts + 1,
+                        ),
+                    )
+
         else:
             logger.warning(
                 "attempted to process payment %s owned by another consumer, that consumer may be dead",
@@ -82,20 +97,6 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
         logger.warning(
             "attempted to process non-pending payment %s, skipping",
             payment_id,
-        )
-
-    async with session.begin():
-        await session.execute(
-            update(PaymentModel)
-            .where(
-                PaymentModel.id == payment_id,
-                PaymentModel.processing_attempts
-                == payment.processing_attempts,  # fencing
-            )
-            .values(
-                status="succeeded",
-                processing_attempts=payment.processing_attempts + 1,
-            ),
         )
 
     async with httpx2.AsyncClient() as http:
