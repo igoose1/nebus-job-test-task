@@ -1,8 +1,8 @@
 """Add payments and outbox_messages.
 
-Revision ID: 33356e9b3c7a
+Revision ID: e67710615061
 Revises:
-Create Date: 2026-09-17 23:15:52.253887
+Create Date: 2026-09-18 00:04:28.289434
 
 """
 
@@ -13,7 +13,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "33356e9b3c7a"
+revision: str = "e67710615061"
 down_revision: str | Sequence[str] | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -70,11 +70,7 @@ def upgrade() -> None:
             server_default=sa.text("timezone('utc', now())"),
             nullable=False,
         ),
-        sa.Column(
-            "processing_status",
-            sa.Enum("awaiting", "started", "failed", "succeeded", native_enum=False),
-            nullable=False,
-        ),
+        sa.Column("started_processing_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("processing_attempts", sa.BigInteger(), nullable=False),
         sa.Column("processed_at", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_payments")),

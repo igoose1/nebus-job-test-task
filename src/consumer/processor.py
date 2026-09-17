@@ -42,40 +42,42 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
         payment = (await session.execute(stmt)).scalar_one_or_none()
     if not payment:
         raise ProcessingNotFoundPaymentError
-    if payment.processing_status == "started":
-        logger.warning(
-            "attempted to process payment %s concurrently, skipping", payment_id
-        )
-        return
-    if payment.processing_status == "succeeded":
-        logger.warning(
-            "attempted to process succeeded payment %s, skipping", payment_id
-        )
-        return
 
-    logger.info("emulating payment processing for payment %s", payment_id)
-    try:
-        await emulate_payment_processing(
-            idempotency_key=payment.id,
-            # here would be more arguments but we are emulating
-        )
-    except Exception:
-        logger.info("failed emulation for payment %s", payment_id)
-        async with session.begin():
-            await session.execute(
-                update(PaymentModel)
-                .where(
-                    PaymentModel.id == payment_id,
-                    PaymentModel.processing_attempts
-                    == payment.processing_attempts,  # fencing
+    if payment.status == "pending":
+        if not payment.started_processing_at:
+            logger.info("emulating payment processing for payment %s", payment_id)
+            try:
+                await emulate_payment_processing(
+                    idempotency_key=payment.id,
+                    # here would be more arguments but we are emulating
                 )
-                .values(
-                    processing_status="failed",
-                    processing_attempts=payment.processing_attempts + 1,
-                ),
+            except EmulatingProcessingError:
+                logger.info("failed emulation for payment %s", payment_id)
+                async with session.begin():
+                    await session.execute(
+                        update(PaymentModel)
+                        .where(
+                            PaymentModel.id == payment_id,
+                            PaymentModel.processing_attempts
+                            == payment.processing_attempts,  # fencing
+                        )
+                        .values(
+                            status="failed",
+                            processing_attempts=payment.processing_attempts + 1,
+                        ),
+                    )
+            logger.info("succeeded emulation for payment %s", payment_id)
+        else:
+            logger.warning(
+                "attempted to process payment %s owned by another consumer, that consumer may be dead",
+                payment_id,
             )
-        raise
-    logger.info("succeeded emulation for payment %s", payment_id)
+    else:
+        logger.warning(
+            "attempted to process non-pending payment %s, skipping",
+            payment_id,
+        )
+
     async with session.begin():
         await session.execute(
             update(PaymentModel)
@@ -85,7 +87,6 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
                 == payment.processing_attempts,  # fencing
             )
             .values(
-                processing_status="succeeded",
                 status="succeeded",
                 processing_attempts=payment.processing_attempts + 1,
             ),
