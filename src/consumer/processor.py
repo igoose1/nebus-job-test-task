@@ -75,6 +75,7 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
                 )
                 .values(
                     processing_status="succeeded",
+                    status="succeeded",
                     processing_attempts=payment.processing_attempts + 1,
                 ),
             )
@@ -90,6 +91,7 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
                 )
                 .values(
                     processing_status="failed",
+                    status="failed",
                     processing_attempts=payment.processing_attempts + 1,
                 ),
             )
