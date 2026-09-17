@@ -1,4 +1,3 @@
-import datetime
 from decimal import Decimal
 from typing import Annotated, Any, Literal
 from uuid import UUID, uuid7
@@ -60,7 +59,6 @@ async def create_payment(
         status="pending",
         idempotency_key=idempotency_key,
         webhook_url=str(body.webhook_url),
-        created_at=datetime.datetime.now(datetime.UTC),
     )
     async with session.begin():
         session.add(payment)
