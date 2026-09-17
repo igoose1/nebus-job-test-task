@@ -36,26 +36,22 @@ class ProcessingNotFoundPaymentError(ProcessingError):
 
 async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
     async with session.begin():
-        stmt = (
-            select(PaymentModel)
-            .where(
-                PaymentModel.id == payment_id,
-            )
-            .with_for_update()
+        stmt = select(PaymentModel).where(
+            PaymentModel.id == payment_id,
         )
         payment = (await session.execute(stmt)).scalar_one_or_none()
-        if not payment:
-            raise ProcessingNotFoundPaymentError
-        if payment.processing_status == "started":
-            logger.warning(
-                "attempted to process payment %s concurrently, skipping", payment_id
-            )
-            return
-        if payment.processing_status == "succeeded":
-            logger.warning(
-                "attempted to process succeeded payment %s, skipping", payment_id
-            )
-            return
+    if not payment:
+        raise ProcessingNotFoundPaymentError
+    if payment.processing_status == "started":
+        logger.warning(
+            "attempted to process payment %s concurrently, skipping", payment_id
+        )
+        return
+    if payment.processing_status == "succeeded":
+        logger.warning(
+            "attempted to process succeeded payment %s, skipping", payment_id
+        )
+        return
 
     logger.info("emulating payment processing for payment %s", payment_id)
     try:
@@ -75,7 +71,6 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
                 )
                 .values(
                     processing_status="failed",
-                    status="failed",
                     processing_attempts=payment.processing_attempts + 1,
                 ),
             )
