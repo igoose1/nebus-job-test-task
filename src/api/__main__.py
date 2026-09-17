@@ -1,5 +1,5 @@
 import contextlib
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import Any
 
 from fastapi import FastAPI
@@ -10,7 +10,7 @@ from src.db.sessions import create_engine, create_session_factory
 
 
 @contextlib.asynccontextmanager
-async def lifespan(_: Any) -> AsyncIterator[dict[str, Any]]:
+async def lifespan(_: Any) -> AsyncGenerator[dict[str, Any]]:
     engine = create_engine(str(settings.db_url))
     session_factory = create_session_factory(engine)
 

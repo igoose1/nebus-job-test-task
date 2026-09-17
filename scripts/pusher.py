@@ -6,6 +6,7 @@
 import asyncio
 import uuid
 from collections import Counter
+from collections.abc import Awaitable
 from typing import Any
 
 import httpx2
@@ -15,7 +16,10 @@ TIMEOUT = 10.0
 
 
 async def send_one(
-    client: httpx2.AsyncClient, url: str, results: Counter, payload: dict[str, Any]
+    client: httpx2.AsyncClient,
+    url: str,
+    results: Counter[Any],
+    payload: dict[str, Any],
 ) -> None:
     headers = {"Idempotency-Key": str(uuid.uuid4())}
     try:
@@ -25,14 +29,16 @@ async def send_one(
         results[type(exc).__name__] += 1
 
 
-async def fire_at(loop: asyncio.AbstractEventLoop, when: float, coro) -> None:
+async def fire_at(
+    loop: asyncio.AbstractEventLoop, when: float, coro: Awaitable[Any]
+) -> None:
     delay = when - loop.time()
     if delay > 0:
         await asyncio.sleep(delay)
     await coro
 
 
-async def run(url: str, rps: int, seconds: float, webhook_url: str) -> Counter:
+async def run(url: str, rps: int, seconds: float, webhook_url: str) -> Counter[Any]:
     payload = {
         "amount": 0,
         "currency": "RUB",
@@ -40,7 +46,7 @@ async def run(url: str, rps: int, seconds: float, webhook_url: str) -> Counter:
         "metadata": {"user_id": 123},
         "webhook_url": webhook_url,
     }
-    results: Counter = Counter()
+    results: Counter[Any] = Counter()
     total = round(rps * seconds)
     async with httpx2.AsyncClient(timeout=TIMEOUT) as client:
         loop = asyncio.get_running_loop()

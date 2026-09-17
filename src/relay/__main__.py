@@ -84,7 +84,8 @@ async def run_broker(broker: RabbitBroker, engine: AsyncEngine) -> None:
                 return_exceptions=True,
             )
 
-            published, failed = [], []
+            published: list[tuple[int, int]] = []
+            failed: list[tuple[int, int]] = []
             for row, result in zip(rows, results, strict=True):
                 if isinstance(result, Exception):
                     logger.warning(

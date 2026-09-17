@@ -1,7 +1,7 @@
 import asyncio
 import contextlib
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
 from faststream import ContextRepo, FastStream
 from faststream.rabbit import Channel, RabbitBroker
@@ -22,7 +22,7 @@ def create_app() -> FastStream:
     broker.include_router(router)
 
     @contextlib.asynccontextmanager
-    async def lifespan(context: ContextRepo) -> AsyncIterator[None]:
+    async def lifespan(context: ContextRepo) -> AsyncGenerator[None]:
         engine = create_engine(str(settings.db_url))
         context.set_global("session_factory", create_session_factory(engine))
 

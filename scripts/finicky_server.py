@@ -8,7 +8,7 @@ import random
 import sys
 import time
 from collections import Counter, defaultdict
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager, suppress
 from typing import Any, Literal
 
@@ -18,10 +18,10 @@ from fastapi import Body, FastAPI, HTTPException, status
 
 INTERVAL = 1.0
 
-buckets: defaultdict[int, Counter] = defaultdict(Counter)
+buckets: defaultdict[int, Counter[int]] = defaultdict(Counter)
 
 
-def publish(second: int, counts: Counter) -> None:
+def publish(second: int, counts: Counter[int]) -> None:
     stamp = time.strftime("%H:%M:%S", time.localtime(second))
     detail = " ".join(f"{code}={n}" for code, n in sorted(counts.items()))
     print(
@@ -38,7 +38,7 @@ async def report() -> None:
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
     task = asyncio.create_task(report())
     yield
     task.cancel()
