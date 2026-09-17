@@ -12,7 +12,8 @@ from typing import Any
 import httpx2
 import typer
 
-TIMEOUT = 10.0
+LIMITS = httpx2.Limits(max_connections=2000, max_keepalive_connections=2000)
+TIMEOUT = httpx2.Timeout(10.0, pool=60.0)
 
 
 async def send_one(
@@ -51,7 +52,8 @@ async def run(
     }
     results: Counter[Any] = Counter()
     total = round(rps * seconds)
-    async with httpx2.AsyncClient(timeout=TIMEOUT) as client:
+
+    async with httpx2.AsyncClient(timeout=TIMEOUT, limits=LIMITS) as client:
         loop = asyncio.get_running_loop()
         start = loop.time()
         tasks = [
