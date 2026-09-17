@@ -44,6 +44,7 @@ async def handle_new_payment(
     except Exception as exc:  # noqa: BLE001
         if attempt > len(RETRY_QUEUES):
             logger.error("attempt %d failed as last: %r", attempt, exc)
+            await message.reject()
             return
         retry_queue = RETRY_QUEUES[attempt - 1]
         logger.warning(
