@@ -5,6 +5,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    api_key: str
+
     listen_host: str
     listen_port: int
     db_url: PostgresDsn

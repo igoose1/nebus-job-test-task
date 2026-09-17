@@ -1,12 +1,15 @@
+import secrets
 from decimal import Decimal
 from typing import Annotated, Any, Literal
 from uuid import UUID, uuid7
 
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Header, HTTPException, Security, status
+from fastapi.security import APIKeyHeader
 from pydantic import AwareDatetime, BaseModel, HttpUrl
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
+from src.conf import settings
 from src.db.models import OutboxMessageModel, PaymentModel
 from src.db.sessions import SessionDep
 from src.types import Currency, NewPaymentEvent, Status
@@ -17,6 +20,15 @@ router = APIRouter()
 @router.get("/health")
 async def healthcheck() -> Literal["OK"]:
     return "OK"
+
+
+api_key_header = APIKeyHeader(name="x-api-key")
+
+
+def validate_api_key(api_key_header: Annotated[str, Security(api_key_header)]) -> None:
+    if secrets.compare_digest(settings.api_key, api_key_header):
+        return
+    raise HTTPException(status.HTTP_403_FORBIDDEN, "invalid API key")
 
 
 class CreatePaymentSchema(BaseModel):
@@ -60,6 +72,7 @@ async def create_payment(
     body: CreatePaymentSchema,
     idempotency_key: Annotated[str, Header()],
     session: SessionDep,
+    _: Annotated[None, Security(validate_api_key)],
 ) -> ShortPaymentSchema:
     new = PaymentModel(
         id=uuid7(),
@@ -109,6 +122,7 @@ async def create_payment(
 async def get_payment(
     payment_id: UUID,
     session: SessionDep,
+    _: Annotated[None, Security(validate_api_key)],
 ) -> DetailedPaymentSchema:
     async with session.begin():
         payment = await session.get(PaymentModel, payment_id)
