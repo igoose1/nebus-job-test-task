@@ -4,6 +4,7 @@ from uuid import UUID, uuid7
 
 from fastapi import APIRouter, Header, HTTPException, status
 from pydantic import AwareDatetime, BaseModel, HttpUrl
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from src.db.models import OutboxMessageModel, PaymentModel
@@ -50,7 +51,7 @@ async def create_payment(
     idempotency_key: Annotated[str, Header()],
     session: SessionDep,
 ) -> ShortPaymentSchema:
-    payment = PaymentModel(
+    new_payment = PaymentModel(
         id=uuid7(),
         amount=body.amount,
         currency=body.currency,
@@ -62,20 +63,27 @@ async def create_payment(
     )
     message = OutboxMessageModel(
         routing_key="payments.new",
-        payload=NewPaymentEvent(payment_id=payment.id).model_dump_json().encode(),
+        payload=NewPaymentEvent(payment_id=new_payment.id).model_dump_json().encode(),
     )
 
-    async with session.begin():
-        session.add_all([payment, message])
-        try:
+    try:
+        async with session.begin():
+            session.add_all([new_payment, message])
             await session.flush()
-        except IntegrityError:
-            # TODO: retrieve a cached payment
-            ...
+            result = new_payment
+    except IntegrityError:
+        async with session.begin():
+            result = (
+                await session.execute(
+                    select(PaymentModel).where(
+                        PaymentModel.idempotency_key == idempotency_key
+                    )
+                )
+            ).scalar_one()
     return ShortPaymentSchema(
-        payment_id=payment.id,
-        status=payment.status,
-        created_at=payment.created_at,
+        payment_id=result.id,
+        status=result.status,
+        created_at=result.created_at,
     )
 
 
