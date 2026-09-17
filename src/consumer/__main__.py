@@ -27,7 +27,7 @@ async def handle_new_payment(event: NewPaymentEvent, message: RabbitMessage) -> 
     attempt = int(message.headers.get("x-attempt", 1))
     logger.info("processing payment_id %s attempt %d", event.payment_id, attempt)
     try:
-        async with session_factory() as session, session.begin():
+        async with session_factory() as session:
             await process_new_payment(session, event.payment_id)
     except Exception as exc:  # noqa: BLE001
         if attempt > len(RETRY_QUEUES):
