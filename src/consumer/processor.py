@@ -7,7 +7,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.models import PaymentModel
-from src.types import WebhookEvent
+from src.types import Status, WebhookEvent
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,18 @@ class ProcessingNotFoundPaymentError(ProcessingError):
 
 class ProcessingWebhookError(ProcessingError):
     """Raised when there's an issue with pushing to a webhook."""
+
+
+async def call_webhook(webhook_url: str, payment_id: UUID, status: Status) -> None:
+    async with httpx2.AsyncClient() as http:
+        response = await http.post(
+            webhook_url,
+            data=WebhookEvent(payment_id=payment_id, status=status).model_dump(),
+        )
+    if response.is_error:
+        raise ProcessingWebhookError(
+            f"webhook failed with {response.status_code}: {response.text}"
+        )
 
 
 async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
@@ -75,30 +87,20 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
             payment_id,
         )
 
-    if new_status:
-        async with session.begin():
-            await session.execute(
-                update(PaymentModel)
-                .where(
-                    PaymentModel.id == payment_id,
-                    PaymentModel.processing_attempts
-                    == payment.processing_attempts,  # fencing
-                )
-                .values(
-                    status=new_status,
-                    processing_attempts=payment.processing_attempts + 1,
-                ),
-            )
+    if not new_status:
+        return
 
-    async with httpx2.AsyncClient() as http:
-        response = await http.post(
-            payment.webhook_url,
-            data=WebhookEvent(
-                payment_id=payment.id,
-                status=payment.status,
-            ).model_dump(),
-        )
-        if response.is_error:
-            raise ProcessingWebhookError(
-                f"webhook failed with {response.status_code}: {response.text}"
+    async with session.begin():
+        await session.execute(
+            update(PaymentModel)
+            .where(
+                PaymentModel.id == payment_id,
+                PaymentModel.processing_attempts
+                == payment.processing_attempts,  # fencing
             )
+            .values(
+                status=new_status,
+                processing_attempts=payment.processing_attempts + 1,
+            ),
+        )
+    await call_webhook(payment.webhook_url, payment_id, new_status)
