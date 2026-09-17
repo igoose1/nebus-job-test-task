@@ -6,7 +6,7 @@ import httpx2
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import PaymentModel
+from src.db.models import UTC_NOW, PaymentModel
 from src.types import Status, WebhookEvent
 
 logger = logging.getLogger(__name__)
@@ -64,6 +64,18 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
     new_status = None
     if payment.status == "pending":
         if not payment.started_processing_at:
+            async with session.begin():
+                await session.execute(
+                    update(PaymentModel)
+                    .where(
+                        PaymentModel.id == payment_id,
+                        PaymentModel.processing_attempts
+                        == payment.processing_attempts,  # fencing
+                    )
+                    .values(
+                        started_processing_at=UTC_NOW,
+                    ),
+                )
             logger.info("emulating payment processing for payment %s", payment_id)
             try:
                 await emulate_payment_processing(
