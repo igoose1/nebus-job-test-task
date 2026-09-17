@@ -1,15 +1,18 @@
 services:
-  service:
+  api:
     build: .
     command: python -m src.api
     depends_on:
       db:
+        condition: service_healthy
+      mq:
         condition: service_healthy
     restart: unless-stopped
     env_file: .env
     environment:
       - SERVICE_LISTEN_HOST=0.0.0.0
       - SERVICE_DB_URL=postgresql+asyncpg://postgres:CHANGEME@db:5432/service
+      - SERVICE_MQ_URL=amqp://service:CHANGEME@mq:5672/
     ports:
       - 127.0.0.1:${SERVICE_LISTEN_PORT}:${SERVICE_LISTEN_PORT}
     healthcheck:
@@ -17,6 +20,29 @@ services:
       interval: 10s
       timeout: 1s
       retries: 5
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src
+          target: /app/src
+          initial_sync: true
+        - action: rebuild
+          path: uv.lock
+
+  consumer:
+    build: .
+    command: python -m src.consumer
+    depends_on:
+      db:
+        condition: service_healthy
+      mq:
+        condition: service_healthy
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - SERVICE_LISTEN_HOST=0.0.0.0
+      - SERVICE_DB_URL=postgresql+asyncpg://postgres:CHANGEME@db:5432/service
+      - SERVICE_MQ_URL=amqp://service:CHANGEME@mq:5672/
     develop:
       watch:
         - action: sync+restart
@@ -41,6 +67,22 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql
 
+  mq:
+    image: rabbitmq:4.3-alpine
+    hostname: mq
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_DEFAULT_USER=service
+      - RABBITMQ_DEFAULT_PASS=CHANGEME
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
 
 volumes:
   postgres-data:
+  rabbitmq-data:
