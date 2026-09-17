@@ -6,6 +6,7 @@ import httpx2
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.conf import settings
 from src.db.models import UTC_NOW, PaymentModel
 from src.types import Status, WebhookEvent
 
@@ -41,10 +42,14 @@ class ProcessingWebhookError(ProcessingError):
 
 
 async def call_webhook(webhook_url: str, payment_id: UUID, status: Status) -> None:
-    async with httpx2.AsyncClient() as http:
+    async with httpx2.AsyncClient(
+        timeout=settings.webhook_timeout.total_seconds(),
+    ) as http:
         response = await http.post(
             webhook_url,
-            data=WebhookEvent(payment_id=payment_id, status=status).model_dump(),
+            data=WebhookEvent(payment_id=payment_id, status=status).model_dump(
+                mode="json",
+            ),
         )
     if response.is_error:
         raise ProcessingWebhookError(
@@ -99,7 +104,7 @@ async def process_new_payment(session: AsyncSession, payment_id: UUID) -> None:
             payment_id,
         )
 
-    if not new_status:
+    if new_status is None:
         return
 
     async with session.begin():

@@ -16,6 +16,8 @@ class Settings(BaseSettings):
 
     max_attempts: int = 3
 
+    webhook_timeout: datetime.timedelta = datetime.timedelta(seconds=10)
+
     model_config = SettingsConfigDict(
         env_prefix="service_",
     )
