@@ -45,13 +45,23 @@ class DetailedPaymentSchema(BaseModel):
     processed_at: AwareDatetime | None
 
 
+def match_model_fields(model: PaymentModel, schema: CreatePaymentSchema) -> bool:
+    return (
+        model.amount == schema.amount
+        and model.currency == schema.currency
+        and model.description == schema.description
+        and model.payment_metadata == schema.metadata
+        and model.webhook_url == schema.webhook_url
+    )
+
+
 @router.post("/payments")
 async def create_payment(
     body: CreatePaymentSchema,
     idempotency_key: Annotated[str, Header()],
     session: SessionDep,
 ) -> ShortPaymentSchema:
-    new_payment = PaymentModel(
+    new = PaymentModel(
         id=uuid7(),
         amount=body.amount,
         currency=body.currency,
@@ -63,27 +73,35 @@ async def create_payment(
     )
     message = OutboxMessageModel(
         routing_key="payments.new",
-        payload=NewPaymentEvent(payment_id=new_payment.id).model_dump_json().encode(),
+        payload=NewPaymentEvent(payment_id=new.id).model_dump_json().encode(),
     )
 
     try:
         async with session.begin():
-            session.add_all([new_payment, message])
-            await session.flush()
-            result = new_payment
+            session.add_all([new, message])
+        return ShortPaymentSchema(
+            payment_id=new.id,
+            status=new.status,
+            created_at=new.created_at,
+        )
     except IntegrityError:
         async with session.begin():
-            result = (
+            previous = (
                 await session.execute(
                     select(PaymentModel).where(
                         PaymentModel.idempotency_key == idempotency_key
                     )
                 )
             ).scalar_one()
+    if not match_model_fields(previous, body):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "idempotency key was repeated with a different payment data, use unique idempotency keys",
+        )
     return ShortPaymentSchema(
-        payment_id=result.id,
-        status=result.status,
-        created_at=result.created_at,
+        payment_id=previous.id,
+        status=previous.status,
+        created_at=previous.created_at,
     )
 
 
