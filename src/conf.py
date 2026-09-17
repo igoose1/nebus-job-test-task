@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     relay_poll_interval: datetime.timedelta = datetime.timedelta(seconds=1)
     relay_publish_timeout: datetime.timedelta = datetime.timedelta(seconds=10)
 
+    max_attempts: int = 3
+
     model_config = SettingsConfigDict(
         env_prefix="service_",
     )

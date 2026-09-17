@@ -1,6 +1,6 @@
 import datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from sqlalchemy import text
@@ -27,6 +27,10 @@ class PaymentModel(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(
         init=False, server_default=UTC_NOW
     )
+    processing_status: Mapped[Literal["awaiting", "started", "failed", "succeeded"]] = (
+        mapped_column(default="awaiting")
+    )
+    processing_attempts: Mapped[int] = mapped_column(default=0)
     processed_at: Mapped[datetime.datetime | None] = mapped_column(default=None)
 
 
