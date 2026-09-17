@@ -29,6 +29,19 @@ services:
         - action: rebuild
           path: uv.lock
 
+  webhook_server:
+    build: .
+    command: python scripts/finicky_server.py 0.0.0.0 12345
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./src
+          target: /app/src
+          initial_sync: true
+        - action: rebuild
+          path: uv.lock
+
   consumer:
     build: .
     command: python -m src.consumer
