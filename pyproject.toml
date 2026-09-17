@@ -29,3 +29,6 @@ name = "ruff"
 type = "exec"
 executable = "ruff"
 options = "format REVISION_SCRIPT_FILENAME"
+
+[dependency-groups]
+scripts = ["fastapi>=0.141.1", "typer>=0.27.2", "uvicorn>=0.53.0"]
