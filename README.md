@@ -86,6 +86,25 @@ Currently there's one consumer service. Code is written in a way that it's easy 
 
 Much attention was put into safety of retries. I assumed that a payment provider we emulate supports idempotency keys which makes retries safe. As an idempotency key for an emulated provider I used payment.id, not user's provided idempotency key.
 
+## Payment processing emulation
+
+Emulation is an awaitable callable object:
+
+```python
+async def emulate_payment_processing(**_data: Any) -> None:
+    import asyncio
+    import random
+
+    # emulate delays
+    await asyncio.sleep(random.random() * 5)
+
+    # emulate errors at a 10% rate
+    if random.random() < 0.1:
+        raise EmulatingProcessingError("not today")
+```
+
+In this code, I process EmulatingProcessingError as a "failed" transaction. In real life, there would be different failures: server can decline the payment, network can fail, etc. Different types of errors requires different approach.
+
 ## Potential improvements
 
 This isn't a production ready code. If I had more time, I'd:
