@@ -12,7 +12,7 @@ from src.types import Status, WebhookEvent
 
 logger = logging.getLogger(__name__)
 
-LEASE = literal_column("interval '20 seconds'", Interval)
+LEASE = literal_column("interval '15 seconds'", Interval)
 
 
 class ProcessingError(Exception):
@@ -121,7 +121,7 @@ async def deliver_webhook(session: AsyncSession, payment_id: UUID) -> None:
 
     if payment.status == "pending":
         logger.warning(
-            "payment %s is owned by another consumer, it will send the webhook",
+            "payment %s is owned by another consumer",
             payment_id,
         )
         raise ProcessingError

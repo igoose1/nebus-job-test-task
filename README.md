@@ -19,7 +19,7 @@ You can test the project by opening http://127.0.0.1:1234/docs. Send a POST requ
 Or run curl:
 
 ```sh
-curl -X 'POST' \
+$ curl -X 'POST' \
   'http://127.0.0.1:1234/api/v1/payments' \
   -H 'accept: */*' \
   -H 'idempotency-key: test' \
@@ -30,11 +30,17 @@ curl -X 'POST' \
   "currency": "RUB",
   "description": "string",
   "metadata": {
-    "additionalProp1": {}
+    "user_id": 123
   },
-  "webhook_url": "https://example.com/"
+  "webhook_url": "http://webhook_server:12345"
 }'
+{"payment_id":"01a0b3ef-1e0e-7129-8c93-8d5335516f3f","status":"pending","created_at":"2026-09-18T09:53:07.600590Z"}
+
+$ curl -H 'x-api-key: key' http://127.0.0.1:1234/api/v1/payments/01a0b3ef-1e0e-7129-8c93-8d5335516f3f
+{"payment_id":"01a0b3ef-1e0e-7129-8c93-8d5335516f3f","status":"succeeded","amount":"1","currency":"RUB","description":"string","metadata":{"user_id":123},"webhook_url":"http://webhook_server:12345/","created_at":"2026-09-18T09:53:07.600590Z","processed_at":"2026-09-18T09:53:11.035717Z"}
 ```
+
+If you run a new POST request with the same data (body and idempotency key), API returns the same `payment_id`. If body differs, you get a 409 HTTP error.
 
 ## Test with a script
 
@@ -94,36 +100,32 @@ webhook_server-1  | 06:42:10      2 rps   200=1 500=1
 
 ## Performance
 
-It's easy to scale this project: add PgBouncer, add more API servers, add more consumers, voilà, we can scale until we hit PostgreSQL's working set size.
+It's easy to scale this project: add PgBouncer, add more API servers, add more consumers, voilà, we can scale until we hit PostgreSQL's write thoughput, working set size, etc.
 
 Even though API server is a simple uvicorn server making 1--2 `INSERT`s, I was curious to test how many RPS I can throw at this API. I used wrk and a custom script (see `scripts/wrk-payments.lua`) to send POST requests with a random idempotency key.
 
 On Ryzen 7 8840HS, I got over 1.5K RPS with 4 workers:
 
 ```plain
-$ wrk -t32 -c1000 -d10s --latency -s scripts/wrk-payments.lua http://127.0.0.1:1234/api/v1/payments
+$ wrk -t32 -c1000 -d10s --timeout 10s --latency -s scripts/wrk-payments.lua http://127.0.0.1:1234/api/v1/payments
 Running 10s test @ http://127.0.0.1:1234/api/v1/payments
   32 threads and 1000 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency   577.11ms  267.80ms   2.00s    74.40%
-    Req/Sec    56.50     32.25   250.00     66.93%
+    Latency   605.98ms  488.76ms   4.34s    70.92%
+    Req/Sec    57.32     36.41   200.00     60.85%
   Latency Distribution
-     50%  544.98ms
-     75%  663.92ms
-     90%  939.94ms
-     99%    1.43s
-  16804 requests in 10.10s, 3.97MB read
-  Socket errors: connect 0, read 0, write 0, timeout 20
-Requests/sec:   1663.86
-Transfer/sec:    402.48KB
+     50%  449.02ms
+     75%  932.96ms
+     90%    1.23s
+     99%    2.30s
+  16906 requests in 10.10s, 3.99MB read
+Requests/sec:   1673.91
+Transfer/sec:    404.95KB
 
-sent 16804 requests in 10.10s (1664 rps)
-202: 16804
-timeout errors: 20
-latency  p50 545.0ms  p95 1075.0ms  p99 1426.5ms  max 1999.6ms
+sent 16906 requests in 10.10s (1674 rps)
+202: 16906
+latency  p50 449.0ms  p95 1444.7ms  p99 2300.7ms  max 4342.0ms
 ```
-
-A little bit of those failed with a timeout. I suspect database connection pool timeouts or Uvicorn "Close Keep-Alive connections" feature in it.
 
 ## Architecture overview
 
