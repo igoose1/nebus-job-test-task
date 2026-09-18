@@ -37,7 +37,7 @@ RETRY_QUEUES = [
     quorum_queue(
         f"payments.retry.{retry_attempt}",
         arguments={
-            "x-message-ttl": 2**retry_attempt * 1000,  # exponential backoff (in ms)
+            "x-message-ttl": 2**retry_attempt * 10_000,  # exponential backoff (in ms)
             "x-dead-letter-exchange": "",
             "x-dead-letter-routing-key": PAYMENTS.name,
             "x-dead-letter-strategy": "at-least-once",

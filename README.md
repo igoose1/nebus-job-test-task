@@ -79,7 +79,7 @@ Events are created by an API server and processed by consumers:
 - Outbox pattern for `payments.new`,
 - `relay` service publishes messages from `outbox_messages` to `payments.new`,
 - `consumer` service reads `payments.new`, attempts to process the payment and send a webhook,
-- failed processing pushes events to 2 retry queues for exponential backoffs (2s, 4s),
+- failed processing pushes events to 2 retry queues for exponential backoffs (20s, 40s),
 - events failed after 3 attempts go to `payments.dlq`,
 
 Currently there's one consumer service. Code is written in a way that it's easy to create new consumers: rows get claimed with fencing tokens, lease is temporary (new worker can pick up a dead consumer's task).
