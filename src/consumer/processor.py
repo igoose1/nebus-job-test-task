@@ -28,7 +28,7 @@ async def emulate_payment_processing(**_data: Any) -> None:
     import random
 
     # emulate delays
-    await asyncio.sleep(random.random() * 5)
+    await asyncio.sleep(random.random() * 3 + 2)
 
     # emulate errors at a 10% rate
     if random.random() < 0.1:
