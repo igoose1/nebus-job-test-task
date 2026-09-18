@@ -44,7 +44,7 @@ async def run(
     url: str, rps: int, seconds: float, webhook_url: str, api_key: str
 ) -> Counter[Any]:
     payload = {
-        "amount": 0,
+        "amount": "67.00",
         "currency": "RUB",
         "description": "nothing to see here",
         "metadata": {"user_id": 123},
