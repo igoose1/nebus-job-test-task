@@ -104,7 +104,7 @@ async def finish_payment(
 
 
 async def deliver_webhook(session: AsyncSession, payment_id: UUID) -> None:
-    """Push the final status to the webhook at most once per payment."""
+    """Push the final status to the webhook."""
     async with session.begin():
         payment = (
             await session.execute(
