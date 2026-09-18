@@ -63,7 +63,7 @@ def match_model_fields(model: PaymentModel, schema: CreatePaymentSchema) -> bool
         and model.currency == schema.currency
         and model.description == schema.description
         and model.payment_metadata == schema.metadata
-        and model.webhook_url == schema.webhook_url
+        and model.webhook_url == str(schema.webhook_url)
     )
 
 
