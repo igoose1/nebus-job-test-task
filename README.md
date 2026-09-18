@@ -16,6 +16,26 @@ docker compose up
 
 You can test the project by opening http://127.0.0.1:1234/docs. Send a POST request to `/api/v1/payments` with a random idempotency key. Default API Key: `key`. Receive updates on your `webhook_url` (specified in a body) or through a GET request to `/api/v1/payments/{payment_id}`.
 
+Or run curl:
+
+```sh
+curl -X 'POST' \
+  'http://127.0.0.1:1234/api/v1/payments' \
+  -H 'accept: */*' \
+  -H 'idempotency-key: test' \
+  -H 'x-api-key: key' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "amount": 1,
+  "currency": "RUB",
+  "description": "string",
+  "metadata": {
+    "additionalProp1": {}
+  },
+  "webhook_url": "https://example.com/"
+}'
+```
+
 ## Test with a script
 
 This project includes two scripts to test server's throughput:
