@@ -4,12 +4,12 @@
 
 Copy `.env.example` into `.env`. You may want to change `SERVICE_LISTEN_HOST` and `SERVICE_LISTEN_PORT`.
 
-Launch services with docker compose and run migrations:
+Launch services with docker compose.
 
 ```sh
-docker compose up
+cp .env.example .env
 
-docker compose run --rm -it api alembic upgrade head
+docker compose up
 ```
 
 ## Test manually

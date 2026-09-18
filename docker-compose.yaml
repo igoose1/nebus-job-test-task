@@ -7,6 +7,8 @@ services:
         condition: service_healthy
       mq:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
     env_file: .env
     environment:
@@ -29,6 +31,18 @@ services:
         - action: rebuild
           path: uv.lock
 
+  migrate:
+    build: .
+    command: alembic upgrade head
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - SERVICE_LISTEN_HOST=0.0.0.0
+      - SERVICE_DB_URL=postgresql+asyncpg://postgres:CHANGEME@db:5432/service
+      - SERVICE_MQ_URL=amqp://service:CHANGEME@mq:5672/
+
   webhook_server:
     build: .
     command: python scripts/finicky_server.py 0.0.0.0 12345
@@ -36,8 +50,8 @@ services:
     develop:
       watch:
         - action: sync+restart
-          path: ./src
-          target: /app/src
+          path: ./scripts
+          target: /app/scripts
           initial_sync: true
         - action: rebuild
           path: uv.lock
