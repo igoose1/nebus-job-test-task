@@ -67,7 +67,7 @@ def match_model_fields(model: PaymentModel, schema: CreatePaymentSchema) -> bool
     )
 
 
-@router.post("/payments")
+@router.post("/payments", status_code=status.HTTP_202_ACCEPTED)
 async def create_payment(
     body: CreatePaymentSchema,
     idempotency_key: Annotated[str, Header()],

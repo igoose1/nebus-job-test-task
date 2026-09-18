@@ -38,36 +38,36 @@ If you run, you find similar output:
 ```sh
 $ time uv run scripts/pusher.py http://127.0.0.1:1234/api/v1/payments 100 10 http://webhook_server:12345 key
 sent 1000 requests
-200: 1000
+202: 1000
 uv run scripts/pusher.py http://127.0.0.1:1234/api/v1/payments 100 10  key  1.53s user 0.22s system 17% cpu 10.241 total
 ```
 
-...meaning 1000 requests received 1000 responses with status code 200.
+...meaning 1000 requests received 1000 responses with status code 202.
 
 webhook_server logs RPS to itself:
 
 ```plain
-webhook_server-1  | 06:41:50     13 rps   200=10 500=3
-webhook_server-1  | 06:41:51     31 rps   200=17 500=14
-webhook_server-1  | 06:41:52     55 rps   200=24 500=31
-webhook_server-1  | 06:41:53     95 rps   200=54 500=41
-webhook_server-1  | 06:41:54    111 rps   200=55 500=56
-webhook_server-1  | 06:41:55    132 rps   200=73 500=59
-webhook_server-1  | 06:41:56    133 rps   200=69 500=64
-webhook_server-1  | 06:41:57    156 rps   200=73 500=83
-webhook_server-1  | 06:41:58    166 rps   200=78 500=88
-webhook_server-1  | 06:41:59    158 rps   200=70 500=88
-webhook_server-1  | 06:42:00    183 rps   200=81 500=102
-webhook_server-1  | 06:42:01    163 rps   200=80 500=83
-webhook_server-1  | 06:42:02    117 rps   200=51 500=66
-webhook_server-1  | 06:42:03     87 rps   200=42 500=45
-webhook_server-1  | 06:42:04     58 rps   200=26 500=32
-webhook_server-1  | 06:42:05     48 rps   200=24 500=24
-webhook_server-1  | 06:42:06     35 rps   200=21 500=14
-webhook_server-1  | 06:42:07     18 rps   200=6 500=12
-webhook_server-1  | 06:42:08     15 rps   200=10 500=5
-webhook_server-1  | 06:42:09      5 rps   200=2 500=3
-webhook_server-1  | 06:42:10      2 rps   200=1 500=1
+webhook_server-1  | 06:41:50     13 rps   202=10 500=3
+webhook_server-1  | 06:41:51     31 rps   202=17 500=14
+webhook_server-1  | 06:41:52     55 rps   202=24 500=31
+webhook_server-1  | 06:41:53     95 rps   202=54 500=41
+webhook_server-1  | 06:41:54    111 rps   202=55 500=56
+webhook_server-1  | 06:41:55    132 rps   202=73 500=59
+webhook_server-1  | 06:41:56    133 rps   202=69 500=64
+webhook_server-1  | 06:41:57    156 rps   202=73 500=83
+webhook_server-1  | 06:41:58    166 rps   202=78 500=88
+webhook_server-1  | 06:41:59    158 rps   202=70 500=88
+webhook_server-1  | 06:42:00    183 rps   202=81 500=102
+webhook_server-1  | 06:42:01    163 rps   202=80 500=83
+webhook_server-1  | 06:42:02    117 rps   202=51 500=66
+webhook_server-1  | 06:42:03     87 rps   202=42 500=45
+webhook_server-1  | 06:42:04     58 rps   202=26 500=32
+webhook_server-1  | 06:42:05     48 rps   202=24 500=24
+webhook_server-1  | 06:42:06     35 rps   202=21 500=14
+webhook_server-1  | 06:42:07     18 rps   202=6 500=12
+webhook_server-1  | 06:42:08     15 rps   202=10 500=5
+webhook_server-1  | 06:42:09      5 rps   202=2 500=3
+webhook_server-1  | 06:42:10      2 rps   202=1 500=1
 ```
 
 ...showing a probability distribution of an emulated payment processing delay. Note that webhook server fails (sends 500) with a 50% rate, this is deliberate. Our payment server never sent an internal error code.
