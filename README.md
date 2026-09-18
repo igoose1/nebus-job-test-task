@@ -14,7 +14,7 @@ docker compose run --rm -it api alembic upgrade head
 
 ## Test manually
 
-You can test the project by opening http://127.0.0.1:1234/docs. Send a POST request to `/api/v1/payments` with a random idemptotency key. Receive updates on your `webhook_url` (specified in a body) or through a GET request to `/api/v1/payments/{payment_id}`.
+You can test the project by opening http://127.0.0.1:1234/docs. Send a POST request to `/api/v1/payments` with a random idempotency key. Receive updates on your `webhook_url` (specified in a body) or through a GET request to `/api/v1/payments/{payment_id}`.
 
 ## Test with a script
 
@@ -109,13 +109,15 @@ In this code, I process EmulatingProcessingError as a "failed" transaction. In r
 
 This isn't a production ready code. If I had more time, I'd:
 
-- Add unit tests,
+- Add unit tests, add integration tests,
 - Split "process payment" and "send webhook" into two different events with their own retries,
 - Store webhook results,
 - Track consumers' rate, errors, and duration to find anomalies before users,
 - Track API and consumers' utilization and saturation to scale when necessary,
 - Limit string lengths, metadata size,
-- Add better security: custom API keys, protect from SSRF in webhook_url.
+- Add better security: custom API keys, protect from SSRF in webhook_url,
+- Re-use HTTP client,
+- Write a better Dockerfile (multi-stage, non-root user), better .dockerignore.
 
 ## AI usage
 
