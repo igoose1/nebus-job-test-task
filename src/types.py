@@ -1,8 +1,10 @@
-from typing import ClassVar, Literal
+from decimal import Decimal
+from typing import Annotated, ClassVar, Literal
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+type Amount = Annotated[Decimal, Field(gt=0, max_digits=18, decimal_places=2)]
 type Currency = Literal["RUB", "USD", "EUR"]
 type Status = Literal["pending", "succeeded", "failed"]
 

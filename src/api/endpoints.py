@@ -1,5 +1,4 @@
 import secrets
-from decimal import Decimal
 from typing import Annotated, Any, Literal
 from uuid import UUID, uuid7
 
@@ -12,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from src.conf import settings
 from src.db.models import OutboxMessageModel, PaymentModel
 from src.db.sessions import SessionDep
-from src.types import Currency, NewPaymentEvent, Status
+from src.types import Amount, Currency, NewPaymentEvent, Status
 
 router = APIRouter()
 
@@ -32,7 +31,7 @@ def validate_api_key(api_key_header: Annotated[str, Security(api_key_header)]) -
 
 
 class CreatePaymentSchema(BaseModel):
-    amount: Decimal
+    amount: Amount
     currency: Currency
     description: str
     metadata: dict[str, Any]
@@ -48,7 +47,7 @@ class ShortPaymentSchema(BaseModel):
 class DetailedPaymentSchema(BaseModel):
     payment_id: UUID
     status: Status
-    amount: Decimal
+    amount: Amount
     currency: Currency
     description: str
     metadata: dict[str, Any]
