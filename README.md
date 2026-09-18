@@ -113,8 +113,9 @@ This isn't a production ready code. If I had more time, I'd:
 - Split "process payment" and "send webhook" into two different events with their own retries,
 - Store webhook results,
 - Track consumers' rate, errors, and duration to find anomalies before users,
-- Track API and consumers' utilization and saturation to scale when necessary.
-- Limit string lengths, metadata size.
+- Track API and consumers' utilization and saturation to scale when necessary,
+- Limit string lengths, metadata size,
+- Add better security: custom API keys, protect from SSRF in webhook_url.
 
 ## AI usage
 
