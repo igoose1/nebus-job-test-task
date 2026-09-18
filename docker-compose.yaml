@@ -64,6 +64,8 @@ services:
         condition: service_healthy
       mq:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
     env_file: .env
     environment:
@@ -87,6 +89,8 @@ services:
         condition: service_healthy
       mq:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
     env_file: .env
     environment:
