@@ -95,7 +95,7 @@ async def finish_payment(
                     PaymentModel.id == payment_id,
                     PaymentModel.processing_attempts == token,  # fencing
                 )
-                .values(status=status)
+                .values(status=status, processed_at=UTC_NOW)
                 .returning(PaymentModel.id)
                 .execution_options(synchronize_session=False)
             )
