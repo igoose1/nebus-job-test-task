@@ -114,6 +114,7 @@ This isn't a production ready code. If I had more time, I'd:
 - Store webhook results,
 - Track consumers' rate, errors, and duration to find anomalies before users,
 - Track API and consumers' utilization and saturation to scale when necessary.
+- Limit string lengths, metadata size.
 
 ## AI usage
 
