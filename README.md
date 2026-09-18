@@ -92,6 +92,39 @@ webhook_server-1  | 06:42:10      2 rps   200=1 500=1
 
 ...showing a probability distribution of an emulated payment processing delay. Note that webhook server fails (sends 500) with a 50% rate, this is deliberate. Our payment server never sent an internal error code.
 
+## Performance
+
+It's easy to scale this project: add PgBouncer, add more API servers, add more consumers, voilà, we can scale until we hit PostgreSQL's working set size.
+
+Even though API server is a simple uvicorn server making 1--2 `INSERT`s, I was curious to test how many RPS I can throw at this API. I used wrk and a custom script (see `scripts/wrk-payments.lua`) to send POST requests with a random idempotency key.
+
+On Ryzen 7 8840HS, I got over 1.5K RPS with 4 workers:
+
+```plain
+$ wrk -t32 -c1000 -d10s --latency -s scripts/wrk-payments.lua http://127.0.0.1:1234/api/v1/payments
+Running 10s test @ http://127.0.0.1:1234/api/v1/payments
+  32 threads and 1000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   577.11ms  267.80ms   2.00s    74.40%
+    Req/Sec    56.50     32.25   250.00     66.93%
+  Latency Distribution
+     50%  544.98ms
+     75%  663.92ms
+     90%  939.94ms
+     99%    1.43s
+  16804 requests in 10.10s, 3.97MB read
+  Socket errors: connect 0, read 0, write 0, timeout 20
+Requests/sec:   1663.86
+Transfer/sec:    402.48KB
+
+sent 16804 requests in 10.10s (1664 rps)
+202: 16804
+timeout errors: 20
+latency  p50 545.0ms  p95 1075.0ms  p99 1426.5ms  max 1999.6ms
+```
+
+A little bit of those failed with a timeout. I suspect database connection pool timeouts or Uvicorn "Close Keep-Alive connections" feature in it.
+
 ## Architecture overview
 
 Events are created by an API server and processed by consumers:
