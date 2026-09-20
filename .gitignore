@@ -15,3 +15,5 @@ venv
 /dist/
 
 .local
+
+.ruff_cache/

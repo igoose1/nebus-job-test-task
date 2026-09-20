@@ -1,3 +1,7 @@
+.git/
+.ruff_cache/
+/task.pdf
+
 __pycache__/
 *.pyc
 
