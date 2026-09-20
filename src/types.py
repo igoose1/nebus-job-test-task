@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Annotated, ClassVar, Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -14,6 +14,6 @@ class NewPaymentEvent(BaseModel):
 
 
 class WebhookEvent(BaseModel):
-    event_type: ClassVar[Literal["payments.processed"]] = "payments.processed"
+    event_type: Literal["payments.processed"] = "payments.processed"
     payment_id: UUID
     status: Status
