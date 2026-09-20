@@ -13,11 +13,17 @@ from src.mq import DLQ, RETRY_QUEUES
 
 logger = logging.getLogger(__name__)
 
+BROKER_PREFETCH_COUNT = 50
+
 
 def create_app() -> FastStream:
     broker = RabbitBroker(
         str(settings.mq_url),
-        default_channel=Channel(publisher_confirms=True, on_return_raises=True),
+        default_channel=Channel(
+            publisher_confirms=True,
+            on_return_raises=True,
+            prefetch_count=BROKER_PREFETCH_COUNT,
+        ),
     )
     broker.include_router(router)
 
