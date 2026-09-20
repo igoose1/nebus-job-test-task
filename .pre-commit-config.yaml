@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: taplo-fmt
         name: taplo fmt
-        entry: taplo fmt --config .config/taplo.toml
+        entry: taplo fmt
         language: python
         additional_dependencies: ["taplo==0.9.3"]
         types: [toml]
