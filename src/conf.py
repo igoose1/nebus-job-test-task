@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     relay_batch_size: int = 100
     relay_poll_interval: datetime.timedelta = datetime.timedelta(seconds=1)
     relay_publish_timeout: datetime.timedelta = datetime.timedelta(seconds=10)
+    consumer_prefetch_count: int = 500
 
     max_attempts: int = 3
 
