@@ -22,7 +22,7 @@ def quorum_queue(
 
 
 PAYMENTS = quorum_queue(
-    "payments",
+    "payments.new",
     routing_key="payments.new",
     arguments={
         "x-dead-letter-exchange": "",
