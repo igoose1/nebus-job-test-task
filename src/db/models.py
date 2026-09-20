@@ -3,14 +3,14 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import text
+from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.base import Base
 from src.types import Currency, Status
 
-UTC_NOW = text("timezone('utc', now())")
+UTC_NOW = func.now()
 
 
 class PaymentModel(Base):

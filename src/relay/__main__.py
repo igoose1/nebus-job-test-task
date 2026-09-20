@@ -3,7 +3,6 @@ import logging
 
 from faststream.rabbit import Channel, ExchangeType, RabbitBroker, RabbitExchange
 from sqlalchemy import (
-    DateTime,
     Interval,
     delete,
     func,
@@ -15,7 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from src.conf import settings
-from src.db.models import OutboxMessageModel
+from src.db.models import UTC_NOW, OutboxMessageModel
 from src.db.sessions import create_engine
 
 logger = logging.getLogger("relay")
@@ -25,7 +24,6 @@ BATCH_SIZE = settings.relay_batch_size
 POLL_INTERVAL = settings.relay_poll_interval.total_seconds()
 PUBLISH_TIMEOUT = settings.relay_publish_timeout.total_seconds()
 
-UTC_NOW = literal_column("timezone('utc', now())", DateTime)
 SECOND = literal_column("interval '1 second'", Interval)
 LEASE = 60 * SECOND
 BACKOFF = (
