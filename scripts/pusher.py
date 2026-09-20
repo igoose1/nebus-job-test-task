@@ -4,6 +4,7 @@
 # ///
 
 import asyncio
+import resource
 import uuid
 from collections import Counter
 from collections.abc import Awaitable
@@ -11,6 +12,15 @@ from typing import Any
 
 import httpx2
 import typer
+
+
+def raise_fd_limit(target: int = 10240) -> None:
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    if hard != resource.RLIM_INFINITY:
+        target = min(target, hard)
+    if soft < target:
+        resource.setrlimit(resource.RLIMIT_NOFILE, (target, hard))
+
 
 LIMITS = httpx2.Limits(max_connections=2000, max_keepalive_connections=2000)
 TIMEOUT = httpx2.Timeout(10.0, pool=60.0)
@@ -72,6 +82,7 @@ async def run(
 
 def main(url: str, n: int, seconds: float, webhook_url: str, api_key: str) -> None:
     """Send N requests/second to URL for SECONDS with a specified WEBHOOK_URL in its body."""
+    raise_fd_limit()
     results = asyncio.run(run(url, n, seconds, webhook_url, api_key))
     print(f"sent {sum(results.values())} requests")
     for key, count in sorted(results.items(), key=lambda kv: str(kv[0])):
