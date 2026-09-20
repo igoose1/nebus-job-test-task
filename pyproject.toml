@@ -18,6 +18,14 @@ dependencies = [
   "uvicorn>=0.53.0",
 ]
 
+[dependency-groups]
+scripts = [
+  "fastapi>=0.141.1",
+  "httpx2>=2.13.0",
+  "typer>=0.27.2",
+  "uvicorn>=0.53.0",
+]
+
 [tool.alembic]
 script_location = "%(here)s/src/db/migrations"
 file_template = "%%(year)d%%(month).2d%%(day).2d%%(hour).2d%%(minute).2d-%%(slug)s-%%(rev)s"
@@ -29,14 +37,6 @@ name = "ruff"
 type = "exec"
 executable = "ruff"
 options = "format REVISION_SCRIPT_FILENAME"
-
-[dependency-groups]
-scripts = [
-  "fastapi>=0.141.1",
-  "httpx2>=2.13.0",
-  "typer>=0.27.2",
-  "uvicorn>=0.53.0",
-]
 
 [tool.pyright]
 typeCheckingMode = "strict"

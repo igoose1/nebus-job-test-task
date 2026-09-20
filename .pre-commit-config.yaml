@@ -19,11 +19,11 @@ repos:
 
   - repo: local
     hooks:
-      - id: taplo-fmt
-        name: taplo fmt
-        entry: taplo fmt
+      - id: tombi-format
+        name: Format toml files
+        entry: tombi format
         language: python
-        additional_dependencies: ["taplo==0.9.3"]
+        additional_dependencies: ["tombi==1.5.5"]
         types: [toml]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
